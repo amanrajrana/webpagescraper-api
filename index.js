@@ -6,62 +6,79 @@ const port = 3000;
 
 app.use(express.json());
 
-const getText = async (url) => {
+const getText = async (baseUrl, urls, url) => {
   try {
     const response = await axios.get(url);
     const $ = cheerio.load(response.data);
 
     // Extract all text content
-    const allText = [];
+    const content = [];
 
     $("body").each((index, element) => {
       const text = $(element).text();
-      allText.push(text);
+      content.push(text);
     });
 
-    return allText.join(" ").length;
+    const title = $("title").text();
+
+    //* Extract all href links
+    $("a").each((index, element) => {
+      const href = $(element).attr("href");
+      if (href) {
+        // Check if the URL is not a hash link or query string
+        if (!(href.includes("#") || href.includes("?") || href == "/")) {
+          const url = new URL(href, baseUrl);
+
+          // Check if the URL belongs to the specified domain
+          if (url.hostname === baseUrl.hostname) {
+            // Check if the URL is not already in the list
+            if (!urls.includes(url.href)) {
+              urls.push(url.href); // Add the URL to the list
+            }
+          }
+        }
+      }
+    });
+
+    return {
+      title,
+      content,
+    };
   } catch (error) {
-    console.log({ domain: url, error: error.message });
     return 0;
   }
 };
 
 app.post("/scrape", async (req, res) => {
-  const domain = "cheerio.js.org";
+  const { domain } = req.body;
+
+  if (!domain) {
+    return res.status(400).json({ error: "Domain is required" });
+  }
+
+  if (!(domain.includes("http://") || domain.includes("https://"))) {
+    return res
+      .status(400)
+      .json({ error: "Domain should not contain http or https" });
+  }
 
   try {
-    const html = await axios.get(`https://${domain}`);
-    const $ = cheerio.load(html.data);
+    const baseUrl = new URL(domain);
 
-    const baseUrl = new URL(`https://${domain}`);
-
-    const urls = [baseUrl];
-    const characterCounts = {};
-
-    // Extract URLs and character counts
-    $("a").each((index, element) => {
-      const href = $(element).attr("href");
-      if (href) {
-        if (href === "/" || href === "#" || href === "/#") {
-          return;
-        }
-
-        const url = new URL(href, baseUrl);
-
-        // Check if the URL belongs to the specified domain
-        if (url.hostname === baseUrl.hostname) {
-          urls.push(url.href);
-        }
-      }
-    });
+    const urls = [domain];
+    const result = [];
 
     // Get character counts
     for (const url of urls) {
-      const characterCount = await getText(url);
-      characterCounts[url] = characterCount;
+      const content = await getText(baseUrl, urls, url);
+      result.push({
+        title: content.title || "Page not found",
+        url,
+        contentLength: content.content?.join(" ").length,
+      });
     }
 
-    res.json({ characterCounts });
+    res.status(200).send(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });

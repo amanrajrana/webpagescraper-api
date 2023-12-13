@@ -1,84 +1,75 @@
-import axios from "axios";
-import * as cheerio from "cheerio";
 import express from "express";
+import cors from "cors";
+import { getText } from "./webpageScraper.js";
+
 const app = express();
-const port = 3000;
+const port = 4002;
 
 app.use(express.json());
+app.use(cors());
 
-const getText = async (baseUrl, urls, url) => {
-  try {
-    const response = await axios.get(url);
-    const $ = cheerio.load(response.data);
+app.post("/api/scrape", async (req, res) => {
+  const { url } = req.body;
 
-    // Extract all text content
-    const content = [];
-
-    $("body").each((index, element) => {
-      const text = $(element).text();
-      content.push(text);
-    });
-
-    const title = $("title").text();
-
-    //* Extract all href links
-    $("a").each((index, element) => {
-      const href = $(element).attr("href");
-      if (href) {
-        // Check if the URL is not a hash link or query string
-        if (!(href.includes("#") || href.includes("?") || href == "/")) {
-          const url = new URL(href, baseUrl);
-
-          // Check if the URL belongs to the specified domain
-          if (url.hostname === baseUrl.hostname) {
-            // Check if the URL is not already in the list
-            if (!urls.includes(url.href)) {
-              urls.push(url.href); // Add the URL to the list
-            }
-          }
-        }
-      }
-    });
-
-    return {
-      title,
-      content,
-    };
-  } catch (error) {
-    return 0;
-  }
-};
-
-app.post("/scrape", async (req, res) => {
-  const { domain } = req.body;
-
-  if (!domain) {
-    return res.status(400).json({ error: "Domain is required" });
+  if (!url) {
+    return res.status(400).json({ url: "Domain is required" });
   }
 
-  if (!(domain.includes("http://") || domain.includes("https://"))) {
+  if (!(url.includes("http://") || url.includes("https://"))) {
     return res
       .status(400)
-      .json({ error: "Domain should not contain http or https" });
+      .json({ error: "Domain can only start with http:// or https://" });
   }
 
   try {
-    const baseUrl = new URL(domain);
+    const baseUrl = new URL(url);
 
-    const urls = [domain];
+    const urls = [url];
     const result = [];
 
-    // Get character counts
-    for (const url of urls) {
-      const content = await getText(baseUrl, urls, url);
+    const content1 = await getText(baseUrl, urls, url);
+    if (content1.content && content1.title) {
       result.push({
-        title: content.title || "Page not found",
+        title: content1.title,
         url,
-        contentLength: content.content?.join(" ").length,
+        contentLength: content1.content?.join(" ").length,
+        content: content1.content,
       });
     }
 
-    res.status(200).send(result);
+    let fetchingUrlsIndex = 1;
+
+    while (true) {
+      const promises = urls.map((url, index) => {
+        if (index <= fetchingUrlsIndex) {
+          return;
+        }
+
+        fetchingUrlsIndex = index;
+        return getText(baseUrl, urls, url);
+      });
+
+      const contents = await Promise.all(promises);
+
+      // Push contents to result
+      for (const content of contents) {
+        if (content && content.content && content.title && content.url) {
+          result.push({
+            title: content.title,
+            url: content.url,
+            contentLength: content.content?.join(" ").length,
+            content: content.content,
+          });
+        }
+      }
+
+      // Check if all urls have been fetched
+      if (fetchingUrlsIndex === urls.length - 1) {
+        break;
+      }
+    }
+
+    return res.status(200).send(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });

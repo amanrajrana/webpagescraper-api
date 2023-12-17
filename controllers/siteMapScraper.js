@@ -10,7 +10,7 @@ function extractText(htmlContent) {
   $("script").remove();
   $("[style]").removeAttr("style");
   return {
-    content: $("body").text(),
+    content: (content = $("body").text().replace(/\s+/g, " ").trim()),
     title: $("title").text(),
   };
 }

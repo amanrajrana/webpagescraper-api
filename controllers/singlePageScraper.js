@@ -22,10 +22,14 @@ export const handleSinglePageScraper = async (req, res) => {
     $("script").remove();
     $("[style]").removeAttr("style");
 
-    return res.send({
-      title: $("title").text(),
-      content: $("body").text().replace(/\s+/g, " ").trim(),
-    });
+    return res.send([
+      {
+        title: $("title").text(),
+        url,
+        contentLength: $("body").text().replace(/\s+/g, " ").trim().length,
+        content: $("body").text().replace(/\s+/g, " ").trim(),
+      },
+    ]);
   } catch (error) {
     return res.status(500).json({ error: error.toString() });
   }

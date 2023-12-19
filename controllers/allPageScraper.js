@@ -6,15 +6,9 @@ const getText = async (baseUrl, urls, url) => {
     const response = await axios.get(url);
     const $ = cheerio.load(response.data);
 
-    // Extract all text content
-    const content = [];
-
-    $("body").each((index, element) => {
-      const text = $(element).text();
-      content.push(text);
-    });
-
-    const title = $("title").text();
+    $("style").remove();
+    $("script").remove();
+    $("[style]").removeAttr("style");
 
     //* Extract all href links
     $("a").each((index, element) => {
@@ -36,8 +30,8 @@ const getText = async (baseUrl, urls, url) => {
     });
 
     return {
-      title,
-      content,
+      title: $("title").text(),
+      content: $("body").text().replace(/\s+/g, " ").trim(),
       url,
     };
   } catch (error) {
@@ -45,8 +39,8 @@ const getText = async (baseUrl, urls, url) => {
   }
 };
 
-export const handleWebpageScrape = async (req, res) => {
-  const { url } = req.body;
+export const handleAllPageScraper = async (req, res) => {
+  const { url } = req.query;
 
   if (!url) {
     return res.status(400).json({ url: "Domain is required" });
@@ -70,7 +64,7 @@ export const handleWebpageScrape = async (req, res) => {
       result.push({
         title: content1.title,
         url,
-        contentLength: content1.content?.join(" ").length,
+        contentLength: content1.content.length,
         content: content1.content,
       });
     }
@@ -95,7 +89,7 @@ export const handleWebpageScrape = async (req, res) => {
           result.push({
             title: content.title,
             url: content.url,
-            contentLength: content.content?.join(" ").length,
+            contentLength: content.content.length,
             content: content.content,
           });
         }

@@ -1,7 +1,7 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
 
-export const getText = async (req, res) => {
+export const handleSinglePageScraper = async (req, res) => {
   const { url } = req.query;
 
   if (!url) {

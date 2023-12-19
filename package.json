@@ -1,5 +1,5 @@
 {
-  "name": "xyz",
+  "name": "web-scraper-api",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
@@ -12,7 +12,6 @@
     "axios": "^1.6.2",
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "sitemapper": "^3.2.8"
+    "express": "^4.18.2"
   }
 }

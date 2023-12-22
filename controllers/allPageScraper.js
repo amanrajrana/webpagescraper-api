@@ -1,5 +1,5 @@
-import axios from "axios";
-import * as cheerio from "cheerio";
+const axios = require("axios");
+const cheerio = require("cheerio");
 
 const getText = async (baseUrl, urls, url) => {
   try {
@@ -39,7 +39,7 @@ const getText = async (baseUrl, urls, url) => {
   }
 };
 
-export const handleAllPageScraper = async (req, res) => {
+const handleAllPageScraper = async (req, res) => {
   const { url } = req.query;
 
   if (!url) {
@@ -107,3 +107,5 @@ export const handleAllPageScraper = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+module.exports = { handleAllPageScraper };

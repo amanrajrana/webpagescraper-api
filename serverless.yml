@@ -1,0 +1,17 @@
+service: webPageScraper-api
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: dev
+  region: ap-south-1
+  lambdaHashingVersion: 20201221
+  memorySize: 1536
+  timeout: 300
+
+functions:
+  hello:
+    handler: handler.server
+    events:
+      - httpApi: '*' # catch-all path

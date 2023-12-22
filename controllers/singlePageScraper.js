@@ -1,7 +1,7 @@
-import axios from "axios";
-import * as cheerio from "cheerio";
+const axios = require("axios");
+const cheerio = require("cheerio");
 
-export const handleSinglePageScraper = async (req, res) => {
+module.exports.handleSinglePageScraper = async (req, res) => {
   const { url } = req.query;
 
   if (!url) {

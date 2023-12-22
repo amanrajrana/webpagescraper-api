@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-app.get("/multi-url", handleAllPageScraper);
-app.get("/single-url", handleSinglePageScraper);
+app.get("/api/scrape/multi-url", handleAllPageScraper);
+app.get("/api/scrape/single-url", handleSinglePageScraper);
 
 module.exports = app;

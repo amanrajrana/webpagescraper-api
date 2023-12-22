@@ -1,7 +1,7 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
 
-module.exports.handleSinglePageScraper = async (req, res) => {
+const handleSinglePageScraper = async (req, res) => {
   const { url } = req.query;
 
   if (!url) {
@@ -34,3 +34,5 @@ module.exports.handleSinglePageScraper = async (req, res) => {
     return res.status(500).json({ error: error.toString() });
   }
 };
+
+module.exports = { handleSinglePageScraper };

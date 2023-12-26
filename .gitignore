@@ -4,3 +4,10 @@ jspm_packages
 
 # Serverless directories
 .serverless
+
+# local env files
+.env.local
+
+# local build files
+temp/*.txt
+assistant.json
